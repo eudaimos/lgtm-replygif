@@ -1,0 +1,6 @@
+lgtm:
+  handler: src/functions/slack/commands/lgtm/index.default
+  events:
+    - http:
+        path: slack/lgtm
+        method: post

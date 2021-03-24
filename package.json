@@ -1,0 +1,59 @@
+{
+  "name": "lambda-troubleshooting-demo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "deploy": "export NODE_ENV=dev && npm run deploy:env",
+    "deploy:env": "sls deploy --stage $NODE_ENV",
+    "deploy:production": "export NODE_ENV=production && npm run deploy:env",
+    "package": "sls package",
+    "lint": "eslint ./src",
+    "start": "serverless offline start",
+    "test": "jest --watch src",
+    "prepare": "husky install",
+    "lint-staged": "lint-staged"
+  },
+  "engines": {
+    "node": "12.21.0"
+  },
+  "dependencies": {
+    "@octokit/request": "^5.4.14",
+    "aws-sdk": "2.804.0",
+    "cheerio": "^1.0.0-rc.5",
+    "got": "^11.8.2",
+    "rollbar": "^2.21.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.13.10",
+    "@babel/preset-env": "^7.13.10",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-jest": "^26.6.3",
+    "babel-loader": "^8.2.2",
+    "babel-plugin-source-map-support": "^2.1.3",
+    "eslint": "^7.22.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "husky": "^5.1.3",
+    "jest": "^26.6.3",
+    "lint-staged": "^10.5.4",
+    "serverless": "2.30.3",
+    "serverless-iam-roles-per-function": "^3.1.0",
+    "serverless-offline": "^6.8.0",
+    "serverless-plugin-split-stacks": "^1.11.0",
+    "serverless-webpack": "^5.4.0",
+    "source-map-support": "^0.5.19",
+    "webpack": "^5.27.0"
+  },
+  "lint-staged": {
+    "src/**/*.js": [
+      "npm run lint -- --fix"
+    ]
+  },
+  "jest": {
+    "collectCoverage": true
+  },
+  "description": "demo of troubleshooting lambda for devops.js conf",
+  "main": "stacks-map.js",
+  "author": "eudaimos",
+  "license": "ISC"
+}
