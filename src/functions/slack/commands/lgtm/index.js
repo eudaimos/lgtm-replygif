@@ -11,6 +11,9 @@ export const lgtm = async function lgtm(event) {
   console.log(event.body); // eslint-disable-line no-console
   rollbar.log(event.body);
   const data = qs.decode(event.body);
+  data.prototype = Object;
+  console.log('data:', data);
+  rollbar.log('data:', data);
   const { command, text, user_id } = data; // eslint-disable-line camelcase
   const ops = text.split(' ').reduce((cur, arg) => {
     const update = cur;
@@ -20,6 +23,8 @@ export const lgtm = async function lgtm(event) {
       update.pr = arg.replace('pr:', '');
     } else if (arg.includes('@')) {
       update.subject = arg;
+    } else if (arg.startsWith('-')) {
+      update[arg.substring(1)] = true;
     } else if (!cur.topic && !cur.gif) {
       const gif = +arg;
       if (gif) {
@@ -30,31 +35,50 @@ export const lgtm = async function lgtm(event) {
     }
     return update;
   }, {});
-  ops.topic = cleanTopic(ops.topic);
-  const pr = await getPR(ops.repo, ops.pr);
-  if (!pr) {
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        response_type: 'ephemeral',
-        text: `${command} used with repo "${ops.repo}" and PR#${ops.pr} that DNE or bot has no access`,
-      }),
-    };
+  if (!ops.noclean) {
+    ops.topic = cleanTopic(ops.topic);
   }
-
-  const { user } = pr;
+  console.log('ops:', ops);
+  rollbar.log('ops:', ops);
   let image;
   if (ops.gif) {
+    console.log(`getting individual image from: ${ops.gif}`);
+    rollbar.log(`getting individual image from: ${ops.gif}`);
     image = imageUrlFromNumber(ops.gif);
   } else {
-    // const imageUrls = await replyGif(ops.topic);
-    const imageUrls = await fetchFromApi(ops.topic);
+    console.log(`getting topic of images for: ${ops.topic}`);
+    rollbar.log(`getting topic of images for: ${ops.topic}`);
+
+    const replyGifReq = ops.replyapi ? fetchFromApi(ops.topic) : replyGif(ops.topic, ops.undef);
+    const imageUrls = await replyGifReq;
     image = getRandomArrayItem(imageUrls);
   }
-  const comment = `@${user.login}\n\n# LGTM\n\n![](${image})\n\n${ops.gif ? 'as' : 'from'} ${ops.gif || ops.topic}`;
+  console.log(`going to use image: ${image}`);
+  rollbar.log(`going to use image: ${image}`);
+
+  let author = null;
+
+  if (!ops.skippr) {
+    const pr = await getPR(ops.repo, ops.pr);
+    if (!pr) {
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          response_type: 'ephemeral',
+          text: `${command} used with repo "${ops.repo}" and PR#${ops.pr} that DNE or bot has no access`,
+        }),
+      };
+    }
+    const { user } = pr;
+    author = `@${user.login}`;
+  }
+
+  const comment = `${author ? `${author}\n\n` : ''}# LGTM\n\n![](${image})\n\n${ops.gif ? 'as' : 'from'} ${ops.gif || ops.topic}`;
+  console.log('comment:', comment);
+  rollbar.log('comment:', comment);
   const commentResult = await postComment(ops.repo, ops.pr, comment);
   console.log(util.inspect(commentResult, false, null, true)); // eslint-disable-line no-console
 
@@ -82,6 +106,8 @@ export const lgtm = async function lgtm(event) {
       text: textResponse,
     }),
   };
+  console.log('response:', response);
+  rollbar.log('response:', response);
 
   return response;
 };

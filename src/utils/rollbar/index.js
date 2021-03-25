@@ -1,15 +1,18 @@
 import Rollbar from 'rollbar';
 import RollbarLocals from 'rollbar/src/server/locals';
+import { config, enabled } from './config';
+
+if (!enabled) {
+  console.log('rollbar not enabled - returning dummy implementation');
+}
 
 const NOOP = () => {};
 
-const { ROLLBAR_ACCESS_TOKEN } = process.env;
+// const { ROLLBAR_ACCESS_TOKEN } = process.env;
 
 // initialize Rollbar
-const rollbar = ROLLBAR_ACCESS_TOKEN ? new Rollbar({
-  accessToken: ROLLBAR_ACCESS_TOKEN,
-  // captureUncaught: true,
-  // captureUnhandledRejections: true,
+const rollbar = enabled ? new Rollbar({
+  ...config,
   locals: RollbarLocals,
 }) : {
   log: NOOP,
@@ -17,10 +20,11 @@ const rollbar = ROLLBAR_ACCESS_TOKEN ? new Rollbar({
   debug: NOOP,
   warning: NOOP,
   info: NOOP,
+  captureEvent: NOOP,
 };
 
 const rollbarHandler = (handler) => (
-  ROLLBAR_ACCESS_TOKEN ? rollbar.lambdaHandler(handler) : handler
+  enabled ? rollbar.lambdaHandler(handler) : handler
 );
 
 export { rollbar };

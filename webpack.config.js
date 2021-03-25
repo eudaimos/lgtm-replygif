@@ -4,7 +4,6 @@ module.exports = {
   entry: slsw.lib.entries,
   target: 'node',
   mode: slsw.lib.webpack.isLocal ? 'development' : 'production',
-  // mode: 'production',
   externals: [{ 'aws-sdk': 'commonjs aws-sdk' }],
   devtool: 'source-map',
   module: {

@@ -1,5 +1,6 @@
 import cheerio from 'cheerio';
 import got from 'got';
+import { rollbar } from '../../utils/rollbar';
 
 const REPLYGIF_URL = 'http://replygif.net';
 const REPLYGIF_API_URL = 'http://replygif.net/api/';
@@ -27,22 +28,44 @@ export function imageUrlFromNumber(gif) {
 }
 
 export async function fetchFromApi(topic) {
-  const requestUrl = `${REPLYGIF_API_URL}gifs?tag=${topic}&${REPLYGIF_API_KEY}`;
-  const body = await got(requestUrl, { responseType: 'json' }).json();
-  if (!body) {
-    return [];
+  const start = Date.now();
+  try {
+    const requestUrl = `${REPLYGIF_API_URL}gifs?tag=${topic}&${REPLYGIF_API_KEY}`;
+    const body = await got(requestUrl, { responseType: 'json' }).json();
+    if (!body) {
+      return [];
+    }
+    return body.map((img) => img.file);
+  } catch (err) {
+    const end = Date.now();
+    const { response } = err;
+    rollbar.captureEvent('network', {
+      subtype: 'fetch',
+      url: response.requestUrl,
+      status_code: response.statusCode,
+      request: response.request.body,
+      request_headers: response.request.headers,
+      method: response.request.method,
+      response: {
+        body: response.body,
+        headers: response.headers,
+      },
+      start_time_ms: response.timings.start,
+      end_time_ms: response.timings.end,
+    }, 'error');
+    throw err;
   }
-  return body.map((img) => img.file);
 }
 
-export const fetch = async function fetch(topic) {
+export const fetch = async function fetch(topic, errorOut = false) {
   const response = await got(`${REPLYGIF_URL}/t/${topic}`);
-  const $ = cheerio(response.body);
-  // const $ = cheerio.load(response.body);
+  let $;
+  if (!errorOut) {
+    $ = cheerio.load(response.body);
+  } else {
+    $ = cheerio(response.body);
+  }
   const imageUrls = [];
-  // $('div.image-container a').each((i, div) => {
-  //   if (!i) console.log(div.attribs.href);
-  // });
   $('div.image-container a').each((i, anchor) => {
     const gifPath = anchor.attribs.href;
     imageUrls.push(imageUrlFromPath(gifPath));

@@ -1,4 +1,5 @@
 module.exports = {
+  sourceType: 'unambiguous',
   presets: [
     [
       '@babel/preset-env',
@@ -10,5 +11,5 @@ module.exports = {
     ],
   ],
   plugins: ['source-map-support'],
-  sourceMaps: 'both',
+  sourceMaps: 'inline',
 };
