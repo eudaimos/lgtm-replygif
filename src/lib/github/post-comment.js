@@ -14,14 +14,12 @@ export async function getRepo(repoRef, token = GITHUB_TOKEN) {
   const { owner, repo } = getRepoParts(repoRef);
   const result = await request({
     method: 'GET',
-    // url: '/orgs/{org}/repos',
     url: '/repos/{owner}/{repo}',
     headers: {
       authorization: `token ${token}`,
     },
     owner,
     repo,
-    // type: 'all',
   });
   if (!result.data) {
     console.log('no repo found');
@@ -81,9 +79,9 @@ export async function getPR(repoRef, pull_number, token = GITHUB_TOKEN) {
 export async function postComment(repoRef, issue, comment, token = GITHUB_TOKEN) {
   const { owner, repo } = getRepoParts(repoRef);
   const headers = {};
-  if (token) {
-    headers.authorization = `token ${token}`;
-  }
+  // if (token) {
+  headers.authorization = `token ${token}`;
+  // }
   const start = Date.now();
   try {
     const result = await request({
@@ -113,7 +111,6 @@ export async function postComment(repoRef, issue, comment, token = GITHUB_TOKEN)
       end_time_ms: end,
     }, 'error');
     console.error(err);
-    // console.log(util.inspect(err, false, null, true));
     throw err;
   }
 }

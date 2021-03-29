@@ -1,3 +1,4 @@
+/* eslint-disable */
 import qs from 'querystring';
 import util from 'util';
 
@@ -8,13 +9,19 @@ import { getPR, postComment } from '../../../../lib/github/post-comment';
 import { getRandomArrayItem } from '../../../../lib/utils/random';
 
 export const lgtm = async function lgtm(event) {
-  console.log(event.body); // eslint-disable-line no-console
+  console.log(event.body);
   rollbar.log(event.body);
   const data = qs.decode(event.body);
   data.prototype = Object;
   console.log('data:', data);
   rollbar.log('data:', data);
-  const { command, text, user_id } = data; // eslint-disable-line camelcase
+  const {
+    command, text, user_id, user_name, team_id, team_domain,
+  } = data;
+  event.person = {
+    id: `${team_id}/${user_id}`,
+    username: `${team_domain}/${user_name}`,
+  };
   const ops = text.split(' ').reduce((cur, arg) => {
     const update = cur;
     if (arg.includes('/')) {
@@ -80,9 +87,8 @@ export const lgtm = async function lgtm(event) {
   console.log('comment:', comment);
   rollbar.log('comment:', comment);
   const commentResult = await postComment(ops.repo, ops.pr, comment);
-  console.log(util.inspect(commentResult, false, null, true)); // eslint-disable-line no-console
+  console.log(util.inspect(commentResult, false, null, false));
 
-  /* eslint-disable camelcase */
   let textResponse = '';
   let response_type = 'ephemeral';
   if (!commentResult) {
@@ -95,7 +101,6 @@ export const lgtm = async function lgtm(event) {
     }
     response_type = 'in_channel';
   }
-  /* eslint-enable camelcase */
   const response = {
     statusCode: 200,
     headers: {
@@ -112,6 +117,4 @@ export const lgtm = async function lgtm(event) {
   return response;
 };
 
-// Export the hander wrapped in the "run warm" utility which will handle events
-// from the scheduler, keeping our actual handler logic clean.
 export default rollbarHandler(runWarm(lgtm));

@@ -5,7 +5,7 @@ const { ROLLBAR_ACCESS_TOKEN } = process.env;
 const config = {
   accessToken: ROLLBAR_ACCESS_TOKEN,
   code_version: '3377043821c5c8575b21c3b409a4c14674ed1d0b',
-  environment: 'production',
+  environment: 'development',
   captureUncaught: true,
   captureUnhandledRejections: true,
   includeItemsInTelemetry: true,
